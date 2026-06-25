@@ -1,4 +1,4 @@
-import { createClient } from '../../lib/supabase';
+import { getSupabaseClient } from '../../lib/supabase';
 import ConceptDashboard from './ConceptDashboard';
 import Navbar from '../components/Navbar';
 
@@ -27,9 +27,12 @@ function masteryScore(level: string) {
   }
 }
 
-const supabase = createClient();
-
 async function getConcepts() {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from('concepts')
     .select('subject, concept, mastery_level, weak_areas, strong_areas, next_steps, last_updated')
@@ -96,5 +99,6 @@ export default async function DashboardPage() {
 
       <ConceptDashboard concepts={concepts} stats={{ totalConcepts, uniqueSubjects, averagePercentage }} />
     </div>
+    </main>
   );
 }

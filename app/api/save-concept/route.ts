@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../lib/supabase';
-
-const supabase = createClient();
+import { getSupabaseClient } from '../../../lib/supabase';
 
 interface RequestBody {
   subject?: unknown;
@@ -44,6 +42,17 @@ export async function POST(request: Request) {
 
   if (!subject || !concept) {
     return NextResponse.json({ error: 'subject and concept are required' }, { status: 400 });
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return NextResponse.json(
+      {
+        error:
+          'Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to valid Supabase values in .env.local.',
+      },
+      { status: 500 }
+    );
   }
 
   const { error } = await supabase

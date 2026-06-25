@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { streamText } from 'ai';
-import { createClient } from '../../../lib/supabase';
-
-const supabase = createClient();
+import { anthropic, createAnthropic } from '@ai-sdk/anthropic';
+import { getSupabaseClient } from '../../../lib/supabase';
 
 interface RequestBody {
   userMessage?: unknown;
@@ -81,24 +80,30 @@ export async function POST(request: Request) {
   let conceptRow: Record<string, unknown> | null = null;
 
   if (subject && concept) {
-    const { data, error } = await supabase
-      .from('concepts')
-      .select('subject, concept, mastery_level, weak_areas, strong_areas')
-      .eq('subject', subject)
-      .eq('concept', concept)
-      .maybeSingle();
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('concepts')
+        .select('subject, concept, mastery_level, weak_areas, strong_areas')
+        .eq('subject', subject)
+        .eq('concept', concept)
+        .maybeSingle();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      conceptRow = data ?? null;
     }
-
-    conceptRow = data ?? null;
   }
 
   const systemPrompt = buildSystemPrompt(subject, concept, conceptRow);
 
+  const anthropicProvider = process.env.ANTHROPIC_API_KEY ? createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : anthropic;
+
   const streamResult = await streamText({
-    model: 'claude-sonnet-4-20250514',
+    model: anthropicProvider('claude-sonnet-4-5'),
+    temperature: 0.4,
     system: systemPrompt,
     messages: [
       {

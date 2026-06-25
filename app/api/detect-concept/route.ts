@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateText } from 'ai';
+import { anthropic, createAnthropic } from '@ai-sdk/anthropic';
 
 interface RequestBody {
   userMessage?: unknown;
@@ -36,21 +37,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'userMessage is required' }, { status: 400 });
   }
 
-  const result = await generateText({
-    model: 'claude-haiku-4-5-20251001',
-    system: extractionSystemPrompt,
-    messages: [
-      {
-        role: 'user',
-        content: `Extract the subject and concept from this message: "${userMessage}"`,
-      },
-    ],
-    allowSystemInMessages: true,
-  });
+  const anthropicProvider = process.env.ANTHROPIC_API_KEY ? createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : anthropic;
 
-  const extracted = parseJsonObject(result.text);
-  const subject = typeof extracted?.subject === 'string' ? extracted.subject : '';
-  const concept = typeof extracted?.concept === 'string' ? extracted.concept : '';
+  try {
+    const result = await generateText({
+      model: anthropicProvider('claude-sonnet-4-5'),
+      temperature: 0,
+      system: extractionSystemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: `Extract the subject and concept from this message: "${userMessage}"`,
+        },
+      ],
+      allowSystemInMessages: true,
+    });
 
-  return NextResponse.json({ subject, concept });
+    const extracted = parseJsonObject(result.text);
+    const subject = typeof extracted?.subject === 'string' ? extracted.subject : '';
+    const concept = typeof extracted?.concept === 'string' ? extracted.concept : '';
+
+    return NextResponse.json({ subject, concept });
+  } catch (error) {
+    console.error('detect-concept failed:', error);
+    return NextResponse.json({ subject: '', concept: '' });
+  }
 }

@@ -119,7 +119,8 @@ export default function HomePage() {
       });
 
       if (!detectResponse.ok) {
-        throw new Error('Concept detection failed');
+        const errorBody = await detectResponse.json().catch(() => null);
+        throw new Error(errorBody?.error ?? 'Concept detection failed');
       }
 
       const detectData = await detectResponse.json();
@@ -154,7 +155,8 @@ export default function HomePage() {
       });
 
       if (!chatResponse.ok || !chatResponse.body) {
-        throw new Error('Chat response failed');
+        const errorBody = await chatResponse.json().catch(() => null);
+        throw new Error(errorBody?.error ?? 'Chat response failed');
       }
 
       const reader = chatResponse.body.getReader();
