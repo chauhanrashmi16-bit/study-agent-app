@@ -51,7 +51,19 @@ function formatDate(value: string | null) {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export default function ConceptDashboard({ concepts }: { concepts: ConceptRow[] }) {
+type ConceptDashboardStats = {
+  totalConcepts: number;
+  uniqueSubjects: number;
+  averagePercentage: number;
+};
+
+export default function ConceptDashboard({
+  concepts,
+  stats,
+}: {
+  concepts: ConceptRow[];
+  stats: ConceptDashboardStats;
+}) {
   const [openId, setOpenId] = useState<string | null>(null);
 
   const renderedCards = useMemo(
@@ -157,6 +169,23 @@ export default function ConceptDashboard({ concepts }: { concepts: ConceptRow[] 
           No concepts found yet.
         </div>
       )}
+      <div className="rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-lg shadow-slate-950/20">
+        <h3 className="text-lg font-semibold text-white">Dashboard summary</h3>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-3xl bg-slate-900/95 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total concepts</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{stats.totalConcepts}</p>
+          </div>
+          <div className="rounded-3xl bg-slate-900/95 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Unique subjects</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{stats.uniqueSubjects}</p>
+          </div>
+          <div className="rounded-3xl bg-slate-900/95 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Avg mastery</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{stats.averagePercentage}%</p>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
